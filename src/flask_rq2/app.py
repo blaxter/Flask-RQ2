@@ -44,6 +44,9 @@ class RQ(object):
     #: .. versionadded:: 17.1
     connection_class = 'redis.StrictRedis'
 
+    #: Additional redis options to use on initialization
+    redis_kwargs = {"socket_keepalive": True, "socket_timeout": 5}
+
     #: List of queue names for RQ to work on.
     queues = [default_queue]
 
@@ -132,7 +135,7 @@ class RQ(object):
 
     def _connect(self):
         connection_class = import_attribute(self.connection_class)
-        return connection_class.from_url(self.redis_url)
+        return connection_class.from_url(self.redis_url, **self.redis_kwargs)
 
     def init_app(self, app):
         """
@@ -146,6 +149,10 @@ class RQ(object):
         self.connection_class = app.config.setdefault(
             'RQ_CONNECTION_CLASS',
             self.connection_class,
+        )
+        self.redis_kwargs = app.config.setdefault(
+            'RQ_REDIS_KWARGS',
+            self.redis_kwargs,
         )
         # all infos to create a Redis connection are now avaiable.
         self._ready_to_connect = True
